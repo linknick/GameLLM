@@ -42,6 +42,8 @@ ENV/
 # Data files (大文件，建議使用 Git LFS 或不上傳)
 *.csv
 !data/
+!data/games.csv
+!data/heroes.csv
 
 # Logs
 *.log
@@ -74,3 +76,6 @@ desktop.ini
 # Test files
 test_*.py
 *_test.py
+
+#.gitignore
+.gitignore.txt
