@@ -153,14 +153,3 @@ predict.py (BPpredictor 類)
 1. **英雄名稱映射**：系統會自動將中文名稱映射為英文名稱，確保正確識別
 2. **LLM 配置**：需要配置 LLM（Ollama 或 OpenAI），詳見 `src/llm_client.py`
 3. **模型文件**：確保 `bp_predictor.model` 存在，否則需要先訓練模型
-
-## 🗂️ 文件清理建議
-
-以下文件可以考慮移動到 `data/` 或 `archive/` 目錄：
-- `match_data.csv`, `match_datashort.csv`, `matchData.csv`, `matchDataShort1.csv`（原始數據）
-- `bp_assistant.py`（如果只使用 `bp_react_assistant.py`）
-
-## 📝 版本歷史
-
-- **v1.0**: 初始版本，支援基本的 BP 預測功能
-- **v1.1**: 添加英雄名稱映射功能，修復中文名稱識別問題
