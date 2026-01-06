@@ -41,9 +41,7 @@ ENV/
 
 # Data files (大文件，建議使用 Git LFS 或不上傳)
 *.csv
-!games.csv
-!heroes.csv
-data/
+!data/
 
 # Logs
 *.log

@@ -28,7 +28,6 @@ def parse_user_input(user_input: str):
     }
     
     user_input = user_input.strip()
-    
     # 檢測動作類型
     if "預測" in user_input or "勝率" in user_input:
         result["action"] = "predict_winrate"
