@@ -27,10 +27,6 @@
   - 自動將中文英雄名稱映射為英文名稱
   - 整合預測、推薦等功能
 
-- **`react_agent.py`**
-  - 通用的 ReAct Agent 範例
-  - 用於其他任務（如計數字母等）
-
 #### 工具模組 (`src/tools/`)
 
 - **`bp_predictor.py`** ⭐ **核心工具**
@@ -45,22 +41,12 @@
   - 提供 `translate_hero_name()` 和 `translate_hero_list()` 函數
   - 支援中文到英文的映射（如：「趙信」→「Xin Zhao」）
 
-- **`count_letters.py`**
-  - 範例工具：計算字母數量
-  - 用於演示 ReAct Agent 的使用
-
 #### 其他模組
 
 - **`src/llm_client.py`**
   - LLM 客戶端封裝
   - 支援 Ollama 和 OpenAI API
   - 提供統一的接口
-
-- **`src/vision/vision_service.py`**
-  - 圖像分類服務（與 BP 分析無關）
-
-- **`src/rag/rag_index.py`**
-  - RAG 索引服務（與 BP 分析無關）
 
 ### 📊 數據文件
 
@@ -79,7 +65,7 @@
 - **`heroes.csv`**
   - 英雄數據（用於初始化模型）
 
-- **`match_data.csv`, `match_datashort.csv`, `matchData.csv`, `matchDataShort1.csv`**
+- **`match_data.csv`**
   - 原始比賽數據（用於數據預處理）
 
 ### 🔧 核心算法
@@ -95,10 +81,6 @@
   - 將原始比賽數據轉換為訓練格式
 
 ### 📝 其他文件
-
-- **`run_demo.py`**
-  - 演示程式（圖像分類 + ReAct 範例）
-  - 與 BP 分析無關，用於演示其他功能
 
 - **`requirement.txt`**
   - Python 依賴包列表
