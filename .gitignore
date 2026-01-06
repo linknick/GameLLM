@@ -78,4 +78,4 @@ test_*.py
 *_test.py
 
 #.gitignore
-.gitignore.txt
+.gitignore
