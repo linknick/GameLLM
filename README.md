@@ -1,52 +1,42 @@
 # BP（Ban/Pick）分析助手
 
 這是一個基於機器學習的 League of Legends BP（Ban/Pick）分析系統，可以預測勝率、推薦選擇和禁用英雄。
-
-```mermaid
-graph TD
-
-    %% 節點宣告
-    Entry[bp_react_assistant.py<br>主程式入口 / LLM ReAct]:::entry
-
-    
-    Agent[src/agent/bp_react_agent.py<br>ReAct Agent 核心調度]:::core
-    LLM[src/llm_client.py<br>LLM 客戶端 OpenAI/Ollama]:::core
-    
-    Mapper[src/tools/hero_name_mapper.py]:::tool
-    Predictor[src/tools/bp_predictor.py<br>Tools接口<br>根據需求調用不同工具]:::tool
-    
-    PredictClass[predict.py<br>BPpredictor核心]:::core
-    Preprocess[preprocessing.py<br>數據預處理]:::core
-
-    TXT[(HeroNames.txt<br>中文別名 JSON 映射表)]:::data
-    Model[(bp_predictor.model<br>統計預測神經網路模型)]:::data
-    CSV[( CSV 數據集<br>games/heroes/match_data)]:::data
-    RAW[(RawData)]:::data
-    %% 關係連結
-    Entry -->|輸入希望分析的陣容| Agent
-    Agent <-->|使用者需求分析/<br>生成自然語言回覆| LLM
-    Mapper -->|英雄名稱映射| Agent
-    Agent -->| 根據分析請求呼叫工具| Predictor
-
-
-    
-    TXT-->|載入| Mapper
-    RAW -->|資料清理|Preprocess
-    Predictor -->|調用數據分析| PredictClass
-    PredictClass -->|回傳模型預測機率| Predictor
-    Predictor -->|返回工具結果|Agent
-    Model -->|載入模型| PredictClass
-    CSV -->|載入數據| PredictClass
-    Preprocess -->|轉換成可用資料| CSV
+```text
++-------------------------------------------------------------------------------+
+|                        bp_react_assistant.py (主程式入口)                      |
+|  [使用者自然語言輸入] -> [調用 LLM 理解意圖] -> [ReAct 決策循環] -> [輸出推薦]     |
++-------------------------------------------------------------------------------+
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+|                            src/agent/bp_react_agent.py                        |
+|   1. 接收輸入   2. 透過 llm_client.py 進行推理   3. 呼叫工具執行預測與推薦        |
++-------------------------------------------------------------------------------+
+         |                                                 |
+         | 1. 英雄名稱中轉英                                | 2. 執行預測、Ban/Pick 推薦
+         v                                                 v
++------------------------------------+           +------------------------------+
+| src/tools/hero_name_mapper.py      |           | src/tools/bp_predictor.py    |
+| (英雄名稱映射工具)                  |           | (BP 預測核心接口)              |
++------------------------------------+           +------------------------------+
+         |                                                 |
+         | 讀取                                            | 封裝與調用
+         v                                                 v
++------------------------------------+           +------------------------------+
+| HeroNames.txt                      |           | predict.py (BPpredictor 類)  |
+| (JSON 映射表: 趙信 -> Xin Zhao)     |           | - XGBoost 勝率預測模型        |
++------------------------------------+           | - 計算 Counter & Synergy     |
+                                                 +------------------------------+
+                                                           |
+                                                           | 載入模型與數據
+                                                           v
+                                                 +------------------------------+
+                                                 | 📁 數據文件庫                |
+                                                 | - bp_predictor.model (模型)  |
+                                                 | - games.csv / heroes.csv     |
+                                                 +------------------------------+
 ```
-```mermaid
-sequenceDiagram
-    Agent->>+LLM: 使用者需求分析
-    LLM-->>-Agent: 返回使用者希望調用的功能及相關變數
-    Agent->>+LLM: 輸入統計模型勝率或推薦陣容
-    LLM-->>-Agent: 生成自然語言對話
-```
-## 📁 項目結構
+
 
 ### 🎯 主程式（入口點）
 
