@@ -44,7 +44,7 @@ sequenceDiagram
     Agent->>+LLM: 使用者需求分析
     LLM-->>-Agent: 返回使用者希望調用的功能及相關變數
     Agent->>+LLM: 輸入統計模型勝率或推薦陣容
-    LLM-->>-Agent: 返回自然語言對話
+    LLM-->>-Agent: 生成自然語言對話
 ```
 ## 📁 項目結構
 
