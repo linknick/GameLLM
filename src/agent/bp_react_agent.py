@@ -1,21 +1,23 @@
 """BP（Ban/Pick）分析助手的 ReAct Agent"""
-import re
+
 import json
 import os
+import re
 import sys
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 
 # 添加項目路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from ..llm_client import LLMClient
-from ..tools.hero_name_mapper import load_hero_names, translate_hero_name, translate_hero_list
-from ..tools.bp_predictor import predict_winrate, recommend_pick, recommend_ban
+from ..tools.bp_predictor import predict_winrate, recommend_ban, recommend_pick
+from ..tools.hero_name_mapper import load_hero_names, translate_hero_list
 
 llm = LLMClient()
 
 # 載入映射表以提供給 LLM
 _HERO_MAP_STR = None
+
 
 def get_hero_mapping_info():
     """獲取英雄映射信息，用於提示 LLM"""
@@ -24,19 +26,20 @@ def get_hero_mapping_info():
         try:
             load_hero_names()
             # 讀取映射文件並格式化
-            with open("HeroNames.txt", 'r', encoding='utf-8') as f:
+            with open("HeroNames.txt", "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             # 構建映射字符串
             mapping_examples = []
             for eng_name, chinese_names in list(data.items())[:10]:  # 只顯示前10個作為示例
                 if isinstance(chinese_names, list) and chinese_names:
                     mapping_examples.append(f'  "{chinese_names[0]}": "{eng_name}"')
-            
+
             _HERO_MAP_STR = "\n".join(mapping_examples)
         except Exception as e:
             _HERO_MAP_STR = f"載入映射表失敗: {e}"
     return _HERO_MAP_STR
+
 
 def get_system_prompt():
     """獲取系統提示詞（動態載入映射信息）"""
@@ -85,7 +88,7 @@ def get_system_prompt():
 def parse_json_action(text: str) -> Optional[Dict]:
     """從 LLM 輸出中解析 JSON Action"""
     # 嘗試提取 JSON 塊
-    json_match = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
+    json_match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
     if json_match:
         json_str = json_match.group(1)
     else:
@@ -95,7 +98,7 @@ def parse_json_action(text: str) -> Optional[Dict]:
             json_str = json_match.group(0)
         else:
             return None
-    
+
     try:
         return json.loads(json_str)
     except json.JSONDecodeError:
@@ -106,26 +109,26 @@ def run_bp_react(user_input: str) -> str:
     """運行 BP ReAct 循環"""
     messages = [
         {"role": "system", "content": get_system_prompt()},
-        {"role": "user", "content": user_input}
+        {"role": "user", "content": user_input},
     ]
-    
+
     # Step 1: 讓 LLM 解析輸入並生成 Action
     print("\n[Agent 思考]")
     step1 = llm.generate(messages)
     print(step1)
-    
+
     # 解析 Action
     action_data = parse_json_action(step1)
-    
+
     if not action_data:
         return "無法解析 Action，請檢查輸出格式。"
-    
+
     action = action_data.get("action")
     args = action_data.get("args", {})
-    
+
     print(f"\n[執行 Action: {action}]")
     print(f"[參數: {json.dumps(args, ensure_ascii=False, indent=2)}]")
-    
+
     # 執行對應的工具
     obs = None
     try:
@@ -134,27 +137,27 @@ def run_bp_react(user_input: str) -> str:
         team2_picks = translate_hero_list(args.get("team2_picks", []))
         team1_bans = translate_hero_list(args.get("team1_bans", []))
         team2_bans = translate_hero_list(args.get("team2_bans", []))
-        
-        print(f"\n[翻譯後的陣容]")
+
+        print("\n[翻譯後的陣容]")
         print(f"藍隊選擇: {team1_picks}")
         print(f"紅隊選擇: {team2_picks}")
         print(f"藍隊禁用: {team1_bans}")
         print(f"紅隊禁用: {team2_bans}")
-        
+
         if action == "predict_winrate":
             result = predict_winrate(
                 team1_picks=team1_picks,
                 team2_picks=team2_picks,
                 team1_bans=team1_bans,
                 team2_bans=team2_bans,
-                team=args.get("team", "blue")
+                team=args.get("team", "blue"),
             )
             if isinstance(result, dict) and "winrate" in result:
                 team_name = "藍隊" if result["team"] == "blue" else "紅隊"
                 obs = f"{team_name}的預測勝率: {result['winrate']:.2%}"
             else:
                 obs = str(result)
-        
+
         elif action == "recommend_pick":
             result = recommend_pick(
                 team1_picks=team1_picks,
@@ -162,13 +165,15 @@ def run_bp_react(user_input: str) -> str:
                 team1_bans=team1_bans,
                 team2_bans=team2_bans,
                 team=args.get("team", "blue"),
-                top_k=args.get("top_k", 5)
+                top_k=args.get("top_k", 5),
             )
             if isinstance(result, list):
-                obs = "推薦選擇:\n" + "\n".join([f"{i+1}. {hero}: {score:.4f}" for i, (hero, score) in enumerate(result)])
+                obs = "推薦選擇:\n" + "\n".join(
+                    [f"{i + 1}. {hero}: {score:.4f}" for i, (hero, score) in enumerate(result)]
+                )
             else:
                 obs = str(result)
-        
+
         elif action == "recommend_ban":
             result = recommend_ban(
                 team1_picks=team1_picks,
@@ -176,33 +181,41 @@ def run_bp_react(user_input: str) -> str:
                 team1_bans=team1_bans,
                 team2_bans=team2_bans,
                 target_team=args.get("team", "red"),
-                top_k=args.get("top_k", 5)
+                top_k=args.get("top_k", 5),
             )
             if isinstance(result, list):
-                obs = "推薦禁用:\n" + "\n".join([f"{i+1}. {hero}: {priority:.4f}" for i, (hero, priority) in enumerate(result)])
+                obs = "推薦禁用:\n" + "\n".join(
+                    [
+                        f"{i + 1}. {hero}: {priority:.4f}"
+                        for i, (hero, priority) in enumerate(result)
+                    ]
+                )
             else:
                 obs = str(result)
-        
+
         else:
             obs = f"未知的動作: {action}"
-    
+
     except Exception as e:
         obs = f"執行錯誤: {e}"
         import traceback
+
         traceback.print_exc()
-    
+
     # Step 2: 將觀察結果返回給 LLM，讓它生成最終回答
     messages.append({"role": "assistant", "content": step1})
-    messages.append({"role": "user", "content": f"Observation: {obs}\n\n請用繁體中文總結結果並給出建議。"})
-    
-    print(f"\n[助手回應]")
+    messages.append(
+        {"role": "user", "content": f"Observation: {obs}\n\n請用繁體中文總結結果並給出建議。"}
+    )
+
+    print("\n[助手回應]")
     final = llm.generate(messages)
     print(final)
-    
+
     return final
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 測試
     test_input = "藍隊選擇了妮可，紅隊選了趙信跟岩雀，請預測勝率"
     result = run_bp_react(test_input)
